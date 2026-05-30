@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DreamVideo · Annotation Helper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg0:#080b14;
+  --bg1:#0d1120;
+  --bg2:#111827;
+  --bg3:#1a2035;
+  --bg4:#202840;
+  --glass:rgba(255,255,255,0.04);
+  --glass-bdr:rgba(255,255,255,0.08);
+  --glass-hover:rgba(255,255,255,0.07);
+
+  --violet:#8b5cf6;
+  --violet-dim:#6d44d4;
+  --violet-glow:rgba(139,92,246,0.18);
+  --teal:#2dd4bf;
+  --teal-dim:#14b8a6;
+  --teal-glow:rgba(45,212,191,0.15);
+  --rose:#fb7185;
+  --rose-glow:rgba(251,113,133,0.15);
+
+  --text1:#f0f2ff;
+  --text2:#8892b0;
+  --text3:#4a5568;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
+
+html,body{
+  height:100%;
+  background:var(--bg0);
+  color:var(--text1);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* mesh background */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(139,92,246,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(45,212,191,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 60% at 60% 20%, rgba(99,102,241,0.07) 0%, transparent 50%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.shell{
+  position:relative;
+  z-index:1;
+  min-height:100vh;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+}
+
+/* HEADER */
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 2.5rem;
+  height:60px;
+  border-bottom:1px solid var(--glass-bdr);
+  background:rgba(8,11,20,0.7);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.brand{display:flex;align-items:center;gap:12px}
+
+.brand-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--violet),#6366f1);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 20px var(--violet-glow);
+}
+.brand-icon svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.brand-name{
+  font-size:15px;font-weight:600;
+  background:linear-gradient(90deg,#c4b5fd,#a5f3fc);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:0.01em;
+}
+
+.brand-sep{width:1px;height:16px;background:var(--glass-bdr)}
+
+.brand-sub{
+  font-family:var(--mono);font-size:11px;
+  color:var(--text3);letter-spacing:0.05em;
+}
+
+.header-right{display:flex;align-items:center;gap:10px}
+
+.status-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#22d3ee;
+  box-shadow:0 0 8px rgba(34,211,238,0.8);
+  animation:breathe 2.5s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}
+
+.status-label{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.05em}
+
+.model-badge{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.05em;
+  border:1px solid rgba(139,92,246,0.3);
+  border-radius:100px;padding:4px 10px;
+  color:#c4b5fd;
+  background:rgba(139,92,246,0.08);
+}
+
+/* MAIN */
+main{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  height:calc(100vh - 60px - 44px);
+}
+
+.pane{padding:2rem 2.5rem;overflow-y:auto}
+.pane::-webkit-scrollbar{width:4px}
+.pane::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
+
+.pane-left{border-right:1px solid var(--glass-bdr)}
+
+/* section label */
+.section-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--text3);
+  display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--glass-bdr)}
+
+/* fields */
+.field{margin-bottom:1.25rem}
+
+label{
+  display:block;
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:8px;
+}
+
+textarea{
+  width:100%;
+  background:var(--glass);
+  border:1px solid var(--glass-bdr);
+  border-radius:12px;
+  color:var(--text1);
+  font-family:var(--sans);font-size:14px;line-height:1.7;
+  padding:14px 16px;
+  resize:vertical;outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
+}
+textarea:hover{border-color:rgba(255,255,255,0.12);background:var(--glass-hover)}
+textarea:focus{
+  border-color:rgba(139,92,246,0.5);
+  background:rgba(139,92,246,0.05);
+  box-shadow:0 0 0 3px rgba(139,92,246,0.1);
+}
+textarea::placeholder{color:var(--text3);font-style:italic}
+#prompt-input{min-height:88px}
+#desc-input{min-height:120px}
+
+.field-meta{
+  display:flex;justify-content:flex-end;margin-top:5px;
+}
+.char-count{font-family:var(--mono);font-size:10px;color:var(--text3)}
+
+/* submit */
+.btn-wrap{margin-top:1.5rem}
+
+.btn-validate{
+  width:100%;height:50px;
+  background:linear-gradient(135deg,#7c3aed,#6366f1);
+  border:none;border-radius:12px;
+  color:#fff;font-family:var(--sans);font-size:14px;font-weight:600;
+  letter-spacing:0.02em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:opacity 0.2s,transform 0.15s,box-shadow 0.2s;
+  box-shadow:0 4px 24px rgba(109,68,212,0.35);
+  position:relative;overflow:hidden;
+}
+.btn-validate::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+  opacity:0;transition:opacity 0.2s;
+}
+.btn-validate:hover:not(:disabled)::before{opacity:1}
+.btn-validate:hover:not(:disabled){box-shadow:0 6px 32px rgba(109,68,212,0.5)}
+.btn-validate:active:not(:disabled){transform:scale(0.98)}
+.btn-validate:disabled{opacity:0.4;cursor:not-allowed}
+
+.btn-validate .spinner{
+  width:16px;height:16px;
+  border:2px solid rgba(255,255,255,0.25);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin 0.65s linear infinite;display:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-validate.loading .spinner{display:block}
+.btn-validate.loading .btn-label{display:none}
+
+/* error */
+.error-box{
+  margin-top:12px;
+  background:rgba(251,113,133,0.08);
+  border:1px solid rgba(251,113,133,0.25);
+  border-radius:10px;padding:12px 14px;
+  font-size:13px;color:#fda4af;
+  font-family:var(--mono);display:none;
+}
+.error-box.show{display:block;animation:fadein 0.2s ease}
+
+/* divider */
+.divider{height:1px;background:var(--glass-bdr);margin:1.75rem 0}
+
+/* examples */
+.ex-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text3);margin-bottom:10px;
+}
+.chips{display:flex;flex-direction:column;gap:6px}
+
+.chip{
+  background:var(--glass);
+  border:1px solid var(--glass-bdr);
+  border-radius:10px;padding:10px 14px;
+  color:var(--text2);font-size:12px;font-family:var(--sans);
+  line-height:1.45;cursor:pointer;text-align:left;
+  transition:border-color 0.15s,background 0.15s,color 0.15s;
+  display:flex;align-items:flex-start;gap:8px;
+}
+.chip:hover{border-color:rgba(255,255,255,0.15);background:var(--glass-hover);color:var(--text1)}
+
+.chip-tag{
+  font-family:var(--mono);font-size:9px;letter-spacing:0.08em;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;
+  flex-shrink:0;margin-top:1px;font-weight:500;
+}
+.chip-tag.vague{background:rgba(251,113,133,0.15);color:#fda4af}
+.chip-tag.ok{background:rgba(45,212,191,0.12);color:#5eead4}
+
+/* OUTPUT PANE */
+.empty-state{
+  height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  opacity:0.3;user-select:none;
+}
+.empty-icon{
+  width:56px;height:56px;border-radius:16px;
+  border:1px solid var(--glass-bdr);
+  display:flex;align-items:center;justify-content:center;
+}
+.empty-icon svg{width:24px;height:24px;stroke:var(--text2);fill:none;stroke-width:1.5;stroke-linecap:round}
+.empty-text{font-family:var(--mono);font-size:12px;color:var(--text3);text-align:center;line-height:1.7;letter-spacing:0.04em}
+
+/* RESULT */
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.result-wrap{animation:fadein 0.35s ease}
+
+/* verdict */
+.verdict{
+  border-radius:14px;padding:16px 20px;
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:16px;
+  border:1px solid;
+}
+.verdict.vague{
+  background:rgba(251,113,133,0.07);
+  border-color:rgba(251,113,133,0.2);
+}
+.verdict.ok{
+  background:rgba(45,212,191,0.06);
+  border-color:rgba(45,212,191,0.2);
+}
+
+.verdict-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.verdict.vague .verdict-icon{background:rgba(251,113,133,0.15)}
+.verdict.ok    .verdict-icon{background:rgba(45,212,191,0.12)}
+
+.verdict-icon svg{width:18px;height:18px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.verdict.vague .verdict-icon svg{stroke:#fb7185}
+.verdict.ok    .verdict-icon svg{stroke:#2dd4bf}
+
+.verdict-text{}
+.verdict-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.verdict.vague .verdict-title{color:#fda4af}
+.verdict.ok    .verdict-title{color:#5eead4}
+.verdict-sub{font-family:var(--mono);font-size:11px;color:var(--text3)}
+
+.verdict-latency{
+  margin-left:auto;font-family:var(--mono);font-size:11px;
+  color:var(--text3);white-space:nowrap;
+}
+
+/* result cards */
+.result-card{
+  background:var(--glass);
+  border:1px solid var(--glass-bdr);
+  border-radius:14px;padding:18px 20px;
+  margin-bottom:12px;
+}
+.result-card:last-child{margin-bottom:0}
+
+.card-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text3);margin-bottom:10px;
+}
+.card-value{font-size:14px;color:var(--text1);line-height:1.65}
+
+/* criterion badge */
+.criterion-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  border-radius:100px;padding:6px 14px 6px 10px;
+  font-size:13px;font-weight:600;border:1px solid;
+  width:fit-content;
+}
+.c-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.crit-VQ .criterion-pill{background:rgba(45,212,191,0.08);border-color:rgba(45,212,191,0.25);color:#5eead4}
+.crit-VQ .c-dot{background:#2dd4bf;box-shadow:0 0 6px rgba(45,212,191,0.6)}
+.crit-PA .criterion-pill{background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.3);color:#c4b5fd}
+.crit-PA .c-dot{background:#8b5cf6;box-shadow:0 0 6px rgba(139,92,246,0.6)}
+.crit-PP .criterion-pill{background:rgba(251,146,60,0.08);border-color:rgba(251,146,60,0.25);color:#fdba74}
+.crit-PP .c-dot{background:#fb923c;box-shadow:0 0 6px rgba(251,146,60,0.6)}
+.crit-MQ .criterion-pill{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.25);color:#93c5fd}
+.crit-MQ .c-dot{background:#3b82f6;box-shadow:0 0 6px rgba(59,130,246,0.6)}
+.crit-TC .criterion-pill{background:rgba(244,114,182,0.08);border-color:rgba(244,114,182,0.25);color:#f9a8d4}
+.crit-TC .c-dot{background:#f472b6;box-shadow:0 0 6px rgba(244,114,182,0.6)}
+
+/* rephrased */
+.rephrased-card{
+  background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(45,212,191,0.05));
+  border:1px solid rgba(99,102,241,0.2);
+  border-radius:14px;padding:18px 20px;
+  margin-bottom:12px;position:relative;
+}
+.rephrased-card .card-label{color:#a5b4fc}
+.rephrased-card .card-value{color:var(--text1)}
+
+.copy-btn{
+  position:absolute;top:14px;right:14px;
+  background:rgba(99,102,241,0.12);
+  border:1px solid rgba(99,102,241,0.25);
+  border-radius:7px;padding:4px 10px;
+  font-family:var(--mono);font-size:10px;letter-spacing:0.05em;
+  color:#a5b4fc;cursor:pointer;
+  transition:background 0.15s,color 0.15s;
+}
+.copy-btn:hover{background:rgba(99,102,241,0.22);color:#c4b5fd}
+
+/* footer */
+footer{
+  height:44px;
+  border-top:1px solid var(--glass-bdr);
+  background:rgba(8,11,20,0.6);
+  backdrop-filter:blur(20px);
+  display:flex;align-items:center;gap:16px;padding:0 2.5rem;
+}
+.footer-item{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.06em}
+.footer-sep{width:1px;height:12px;background:var(--glass-bdr)}
+.footer-tag{
+  font-family:var(--mono);font-size:10px;
+  background:var(--glass);border:1px solid var(--glass-bdr);
+  border-radius:4px;padding:2px 8px;color:var(--text2);
+}
+
+@media(max-width:720px){
+  main{grid-template-columns:1fr}
+  .pane-left{border-right:none;border-bottom:1px solid var(--glass-bdr)}
+  .empty-state{height:180px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 16 16"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+    </div>
+    <span class="brand-name">DreamVideo</span>
+    <div class="brand-sep"></div>
+    <span class="brand-sub">annotation helper</span>
+  </div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <span class="status-label">live</span>
+    <span class="model-badge">gemini-2.5-flash</span>
+  </div>
+</header>
+
+<main>
+  <!-- INPUT -->
+  <div class="pane pane-left">
+    <div class="section-label">Input</div>
+
+    <div class="field">
+      <label for="prompt-input">Video Prompt</label>
+      <textarea id="prompt-input" rows="3"
+        placeholder="Describe the video generation prompt…"></textarea>
+      <div class="field-meta">
+        <span class="char-count" id="pc">0 / 2000</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="desc-input">Issue Description</label>
+      <textarea id="desc-input" rows="5"
+        placeholder="Describe the specific issue observed in the video…"></textarea>
+      <div class="field-meta">
+        <span class="char-count" id="dc">0 / 1000</span>
+      </div>
+    </div>
+
+    <div id="error-box" class="error-box"></div>
+
+    <div class="btn-wrap">
+      <button class="btn-validate" id="vbtn" onclick="runValidation()">
+        <div class="spinner"></div>
+        <span class="btn-label">Validate annotation →</span>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <p class="ex-label">Try an example</p>
+    <div class="chips">
+      <button class="chip" onclick="load('v1')">
+        <span class="chip-tag vague">vague</span>
+        <span>"The dancer's movement looks weird during the jump."</span>
+      </button>
+      <button class="chip" onclick="load('v2')">
+        <span class="chip-tag vague">vague</span>
+        <span>"The video looks blurry."</span>
+      </button>
+      <button class="chip" onclick="load('s1')">
+        <span class="chip-tag ok">specific</span>
+        <span>Thermal palette absent — clip appears in normal color instead of heat map.</span>
+      </button>
+      <button class="chip" onclick="load('s2')">
+        <span class="chip-tag ok">specific</span>
+        <span>Soap bar clips through sink surface from 0:02 to 0:05.</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="pane pane-right" id="output">
+    <div class="section-label">Result</div>
+    <div class="empty-state" id="empty">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      </div>
+      <p class="empty-text">Paste a prompt and description<br/>then click validate</p>
+    </div>
+    <div id="result" style="display:none"></div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-item">DreamVideo Annotation QC</span>
+  <div class="footer-sep"></div>
+  <span class="footer-tag">FastAPI</span>
+  <span class="footer-tag">Groq / Gemini</span>
+  <span class="footer-item" style="margin-left:auto">Ctrl+Enter to validate</span>
+</footer>
+
+</div>
+<script>
+const API = 'http://localhost:8000/api/v1';
+
+const EX = {
+  v1:{
+    prompt:'A dancer performs a contemporary solo routine on a wooden stage under warm stage lighting.',
+    description:"The dancer's movement looks weird during the jump."
+  },
+  v2:{
+    prompt:'A soap bar dissolves in a kitchen sink filled with running water, shot in thermal imaging style, with suds overflowing onto the counter.',
+    description:'The video looks blurry.'
+  },
+  s1:{
+    prompt:'A soap bar dissolves in a kitchen sink filled with running water, shot in thermal imaging style, with suds overflowing onto the counter.',
+    description:'The video does not show thermal imaging at all — the whole clip appears in normal color instead of a heat map palette.'
+  },
+  s2:{
+    prompt:'A soap bar dissolves in a kitchen sink filled with running water, shot in thermal imaging style, with suds overflowing onto the counter.',
+    description:'The soap bar clips through the kitchen sink surface from 0:02 to 0:05, violating solid-surface contact.'
+  }
+};
+
+const CRIT_CLASS = {
+  'Visual Quality':'crit-VQ',
+  'Prompt Alignment':'crit-PA',
+  'Physical Plausibility':'crit-PP',
+  'Motion Quality':'crit-MQ',
+  'Temporal Consistency':'crit-TC'
+};
+
+function updateCount(id, outId, max){
+  const el=document.getElementById(id);
+  const out=document.getElementById(outId);
+  el.addEventListener('input',()=>{out.textContent=el.value.length+' / '+max});
+}
+updateCount('prompt-input','pc',2000);
+updateCount('desc-input','dc',1000);
+
+function load(k){
+  const ex=EX[k];if(!ex)return;
+  document.getElementById('prompt-input').value=ex.prompt;
+  document.getElementById('desc-input').value=ex.description;
+  document.getElementById('pc').textContent=ex.prompt.length+' / 2000';
+  document.getElementById('dc').textContent=ex.description.length+' / 1000';
+  clearError();
+}
+
+function showError(msg){
+  const el=document.getElementById('error-box');
+  el.textContent='⚠  '+msg;el.classList.add('show');
+}
+function clearError(){document.getElementById('error-box').classList.remove('show')}
+
+function setLoading(on){
+  const b=document.getElementById('vbtn');
+  b.disabled=on;b.classList.toggle('loading',on);
+}
+
+function esc(s){
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function extractDetail(body){
+  if(!body||!body.detail)return null;
+  if(typeof body.detail==='string')return body.detail;
+  if(Array.isArray(body.detail))return body.detail.map(e=>e.msg||JSON.stringify(e)).join('; ');
+  return null;
+}
+
+async function runValidation(){
+  const prompt=document.getElementById('prompt-input').value.trim();
+  const description=document.getElementById('desc-input').value.trim();
+  clearError();
+
+  if(!prompt||prompt.length<5){showError('Prompt must be at least 5 characters.');return}
+  if(!description||description.length<10){showError('Description must be at least 10 characters.');return}
+  if(prompt.length>2000){showError('Prompt is too long (max 2000 chars).');return}
+  if(description.length>1000){showError('Description is too long (max 1000 chars).');return}
+
+  setLoading(true);
+  document.getElementById('empty').style.display='flex';
+  document.getElementById('result').style.display='none';
+
+  try{
+    let resp;
+    try{
+      resp=await fetch(`${API}/validate`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({prompt,description}),
+        signal:AbortSignal.timeout(35000)
+      });
+    }catch(e){
+      if(e.name==='TimeoutError'||e.name==='AbortError'){
+        showError('Request timed out — please try again.');
+      }else{
+        showError('Cannot reach backend. Make sure it is running on port 8000.');
+      }
+      return;
+    }
+
+    let body={};
+    try{body=await resp.json()}catch(_){}
+
+    if(!resp.ok){
+      const msgs={422:'Invalid input — '+(extractDetail(body)||'check your fields.'),502:'AI service error — please retry.',504:'AI model timed out — please retry.',500:'Server error — please try again.'};
+      showError(msgs[resp.status]||`Unexpected error (HTTP ${resp.status}).`);
+      return;
+    }
+
+    render(body);
+  }finally{
+    setLoading(false);
+  }
+}
+
+function render(data){
+  const {result,latency_ms,model_used}=data;
+  const vague=result.is_vague;
+  const area=document.getElementById('result');
+
+  document.getElementById('empty').style.display='none';
+  area.style.display='block';
+
+  const cc=CRIT_CLASS[result.suggested_criterion]||'';
+
+  let reasonHTML='';
+  if(vague&&result.vague_reason){
+    reasonHTML=`<div class="result-card">
+      <div class="card-label">Why it's vague</div>
+      <div class="card-value">${esc(result.vague_reason)}</div>
+    </div>`;
+  }
+
+  let critHTML='';
+  if(!vague&&result.suggested_criterion){
+    critHTML=`<div class="result-card ${cc}">
+      <div class="card-label">Suggested criterion</div>
+      <div class="criterion-pill"><span class="c-dot"></span>${esc(result.suggested_criterion)}</div>
+      ${result.criterion_reasoning?`<div class="card-value" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">${esc(result.criterion_reasoning)}</div>`:''}
+    </div>`;
+  }
+
+  let rephHTML='';
+  if(!vague&&result.rephrased_description){
+    rephHTML=`<div class="rephrased-card">
+      <div class="card-label">Rephrased description</div>
+      <div class="card-value">${esc(result.rephrased_description)}</div>
+      <button class="copy-btn" onclick="doCopy(this,${JSON.stringify(result.rephrased_description)})">copy</button>
+    </div>`;
+  }
+
+  area.innerHTML=`<div class="result-wrap">
+    <div class="verdict ${vague?'vague':'ok'}">
+      <div class="verdict-icon">
+        ${vague
+          ?'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>'
+          :'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>'}
+      </div>
+      <div class="verdict-text">
+        <div class="verdict-title">${vague?'Description is vague':'Description is specific'}</div>
+        <div class="verdict-sub">${esc(model_used)}</div>
+      </div>
+      <div class="verdict-latency">${Math.round(latency_ms)} ms</div>
+    </div>
+    ${reasonHTML}${critHTML}${rephHTML}
+  </div>`;
+}
+
+function doCopy(btn,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='copied!';
+    setTimeout(()=>{btn.textContent='copy'},1600);
+  });
+}
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter')runValidation();
+});
+</script>
+</body>
+</html>

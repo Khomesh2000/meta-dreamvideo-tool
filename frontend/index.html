@@ -588,7 +588,7 @@ async function runValidation(){
       if(e.name==='TimeoutError'||e.name==='AbortError'){
         showError('Request timed out — please try again.');
       }else{
-        showError('Cannot reach backend. Make sure it is running on port 8000.');
+        showError('Cannot connect to backend.');
       }
       return;
     }

@@ -97,16 +97,6 @@ Open `frontend/index.html` directly in any browser — no build step, no Node.js
 
 ---
 
-## Do I need a session_id?
-
-**No.** Each `/validate` call is fully stateless — the full prompt + description is sent to the LLM in a single turn with no conversation history maintained.
-
-Google's Gemini infrastructure handles massive concurrent scaling server-side, and LangChain's `ChatGoogleGenerativeAI` client is inherently thread-safe.
-
-A `session_id` would only be required for multi-turn conversational history, which this automated evaluation tool does not use. The chain is built once via `@lru_cache` and reused across all requests, eliminating per-request LLM client initialization overhead.
-
----
-
 ## Scaling beyond 100 concurrent users
 
 | Concern | Solution |
